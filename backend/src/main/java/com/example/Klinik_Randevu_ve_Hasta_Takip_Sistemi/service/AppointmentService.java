@@ -7,6 +7,7 @@ import com.example.Klinik_Randevu_ve_Hasta_Takip_Sistemi.repository.PatientRepos
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -19,10 +20,13 @@ public class AppointmentService {
     private PatientRepository patientRepository;
 
     public Appointment createAppointment(Appointment appointment) {
+        validateAppointmentDateTime(appointment.getAppointmentDateTime());
         return appointmentRepository.save(appointment);
     }
 
     public Appointment updateAppointment(Long id, Appointment appointmentDetails) {
+        validateAppointmentDateTime(appointmentDetails.getAppointmentDateTime());
+
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Appointment not found with id: " + id));
 
@@ -63,6 +67,8 @@ public class AppointmentService {
     }
 
     public Appointment scheduleAppointment(Long patientId, Appointment appointment) {
+        validateAppointmentDateTime(appointment.getAppointmentDateTime());
+
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found with id: " + patientId));
 
@@ -70,5 +76,15 @@ public class AppointmentService {
         appointment.setStatus("SCHEDULED");
 
         return appointmentRepository.save(appointment);
+    }
+
+    private void validateAppointmentDateTime(LocalDateTime appointmentDateTime) {
+        if (appointmentDateTime == null) {
+            throw new IllegalArgumentException("Randevu tarihi boş olamaz");
+        }
+
+        if (appointmentDateTime.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Randevu tarihi şu anki tarihten ileri olmalıdır");
+        }
     }
 }

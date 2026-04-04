@@ -5,6 +5,7 @@ import com.example.Klinik_Randevu_ve_Hasta_Takip_Sistemi.repository.PatientRepos
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,10 +16,13 @@ public class PatientService {
     private PatientRepository patientRepository;
 
     public Patient createPatient(Patient patient) {
+        validateDateOfBirth(patient.getDateOfBirth());
         return patientRepository.save(patient);
     }
 
     public Patient updatePatient(Long id, Patient patientDetails) {
+        validateDateOfBirth(patientDetails.getDateOfBirth());
+        
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found with id: " + id));
 
@@ -54,5 +58,15 @@ public class PatientService {
 
     public Optional<Patient> getPatientByPhoneNumber(String phoneNumber) {
         return patientRepository.findByPhoneNumber(phoneNumber);
+    }
+
+    private void validateDateOfBirth(LocalDate dateOfBirth) {
+        if (dateOfBirth == null) {
+            throw new IllegalArgumentException("Doğum tarihi boş olamaz");
+        }
+        
+        if (dateOfBirth.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Doğum tarihi geçmiş bir tarih olmalıdır");
+        }
     }
 }

@@ -2,6 +2,15 @@ import { useState } from 'react';
 import { patientApi } from '../services/api';
 import '../styles/AddPatientForm.css';
 
+// Bugünün tarihini date format'ına dönüştür (max doğum tarihi)
+const getMaxDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function AddPatientForm({ onPatientAdded }) {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -121,6 +130,7 @@ export default function AddPatientForm({ onPatientAdded }) {
               name="dateOfBirth"
               value={formData.dateOfBirth}
               onChange={handleChange}
+              max={getMaxDate()}
               required
             />
           </div>
