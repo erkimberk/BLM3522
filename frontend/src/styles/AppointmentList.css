@@ -1,16 +1,14 @@
 .appointment-list {
-  flex: 1;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
   overflow-y: auto;
 }
 
 .appointment-list h2 {
   color: #333;
-  margin-bottom: 20px;
-  font-size: 24px;
+  margin: 0;
+  font-size: 20px;
 }
 
 .no-selection,

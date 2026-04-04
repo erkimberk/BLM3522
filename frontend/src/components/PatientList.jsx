@@ -47,41 +47,43 @@ export default function PatientList({ onPatientSelect, refreshTrigger }) {
       {patients.length === 0 ? (
         <p className="no-data">Henüz hasta kaydı bulunmamaktadır.</p>
       ) : (
-        <table className="patients-table">
-          <thead>
-            <tr>
-              <th>Ad</th>
-              <th>Soyad</th>
-              <th>Email</th>
-              <th>Telefon</th>
-              <th>İşlemler</th>
-            </tr>
-          </thead>
-          <tbody>
-            {patients.map(patient => (
-              <tr key={patient.id}>
-                <td>{patient.firstName}</td>
-                <td>{patient.lastName}</td>
-                <td>{patient.email}</td>
-                <td>{patient.phoneNumber}</td>
-                <td>
-                  <button 
-                    className="btn-view" 
-                    onClick={() => onPatientSelect(patient)}
-                  >
-                    Randevular
-                  </button>
-                  <button 
-                    className="btn-delete" 
-                    onClick={() => handleDelete(patient.id)}
-                  >
-                    Sil
-                  </button>
-                </td>
+        <div className="patients-table-wrapper">
+          <table className="patients-table">
+            <thead>
+              <tr>
+                <th>Ad</th>
+                <th>Soyad</th>
+                <th>Email</th>
+                <th>Telefon</th>
+                <th>İşlemler</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {patients.map(patient => (
+                <tr key={patient.id}>
+                  <td>{patient.firstName}</td>
+                  <td>{patient.lastName}</td>
+                  <td>{patient.email}</td>
+                  <td>{patient.phoneNumber}</td>
+                  <td>
+                    <button 
+                      className="btn-view" 
+                      onClick={() => onPatientSelect(patient)}
+                    >
+                      Randevular
+                    </button>
+                    <button 
+                      className="btn-delete" 
+                      onClick={() => handleDelete(patient.id)}
+                    >
+                      Sil
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
