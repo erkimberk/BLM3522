@@ -1,0 +1,25 @@
+# AWS Sertifikaları ve Anahtarlar
+certificates/*.pem
+certificates/*.key
+certificates/*.crt
+certificates/*.txt
+config/aws_config.json
+
+# Python ortamı
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# IDE ve sistem dosyaları
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Ortam değişkenleri
+.env
+.env.local
