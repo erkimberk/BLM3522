@@ -226,3 +226,27 @@ Değişen dosyalar:
 - `backend/src/main/java/com/example/Klinik_Randevu_ve_Hasta_Takip_Sistemi/service/PatientService.java` (+14/-0)
 - `frontend/src/components/AddAppointmentForm.jsx` (+12/-0)
 - `frontend/src/components/AddPatientForm.jsx` (+10/-0)
+
+---
+
+## 12) 09d3480cb1568990e7843abaea416a815b4dc13e
+- Kısa hash: `09d3480`
+- Mesaj: appointment status functions and readme update
+- Etki: 7 dosya, +865 / -8 satır
+
+Yapılan iş:
+- Randevu durum yönetimi özelliği eklendi: planlanan randevunun tamamlandı veya iptal edildi olarak güncellenmesi sağlandı.
+- Backend tarafında `AppointmentService` içine durum değiştirme iş kuralları eklendi ve `AppointmentController` üzerinden ilgili endpoint’ler açıldı.
+- Frontend tarafında `AppointmentList` bileşenine durum aksiyonları (tamamlama/iptal) bağlandı; kullanıcı etkileşimi ve görsel geri bildirimler güncellendi.
+- `api.js` içinde yeni endpoint çağrıları tanımlanarak frontend-backend entegrasyonu tamamlandı.
+- Randevu kartı stilinde butonlar ve durum görünümü için CSS güncellemeleri yapıldı.
+- Dokümantasyon tarafında proje anlatımı güncellendi: kök `README.md` eklendi ve commit döküm dosyası (`commits.md`) oluşturuldu.
+
+Değişen dosyalar:
+- `README.md` (+479/-0)
+- `backend/src/main/java/com/example/Klinik_Randevu_ve_Hasta_Takip_Sistemi/controller/AppointmentController.java` (+12/-0)
+- `backend/src/main/java/com/example/Klinik_Randevu_ve_Hasta_Takip_Sistemi/service/AppointmentService.java` (+24/-0)
+- `commits.md` (+228/-0)
+- `frontend/src/components/AppointmentList.jsx` (+65/-8)
+- `frontend/src/services/api.js` (+18/-0)
+- `frontend/src/styles/AppointmentList.css` (+39/-0)
