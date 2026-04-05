@@ -1,0 +1,17 @@
+# AWS IoT ve Kinesis bağlantısı için gerekli kütüphane
+boto3==1.34.0
+
+# MQTT protokolü için gerekli kütüphane (IoT Core'a bağlanmak için)
+paho-mqtt==1.6.1
+
+# JSON ve veri işleme için gerekli kütüphaneler
+python-dateutil==2.8.2
+
+# Ortam değişkenlerini yüklemek için
+python-dotenv==1.0.0
+
+# HTTP istekleri için
+requests==2.31.0
+
+# Loglama ve hata takibi için
+colorama==0.4.6
