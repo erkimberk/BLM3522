@@ -78,6 +78,30 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
+    public Appointment completeAppointment(Long id) {
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Appointment not found with id: " + id));
+
+        if (!appointment.getStatus().equals("SCHEDULED")) {
+            throw new IllegalArgumentException("Sadece SCHEDULED durumundaki randevular tamamlanabilir");
+        }
+
+        appointment.setStatus("COMPLETED");
+        return appointmentRepository.save(appointment);
+    }
+
+    public Appointment cancelAppointment(Long id) {
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Appointment not found with id: " + id));
+
+        if (!appointment.getStatus().equals("SCHEDULED")) {
+            throw new IllegalArgumentException("Sadece SCHEDULED durumundaki randevular iptal edilebilir");
+        }
+
+        appointment.setStatus("CANCELLED");
+        return appointmentRepository.save(appointment);
+    }
+
     private void validateAppointmentDateTime(LocalDateTime appointmentDateTime) {
         if (appointmentDateTime == null) {
             throw new IllegalArgumentException("Randevu tarihi boş olamaz");

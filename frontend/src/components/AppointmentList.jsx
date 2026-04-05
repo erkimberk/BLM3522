@@ -52,8 +52,45 @@ export default function AppointmentList({ patientId, patientName, refreshTrigger
     }
   };
 
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'SCHEDULED':
+        return 'Planlandı';
+      case 'COMPLETED':
+        return 'Tamamlandı';
+      case 'CANCELLED':
+        return 'İptal Edildi';
+      default:
+        return status;
+    }
+  };
+
   const formatDateTime = (dateTime) => {
     return new Date(dateTime).toLocaleString('tr-TR');
+  };
+
+  const handleComplete = async (id) => {
+    if (window.confirm('Bu randevuyu tamamlandı olarak işaretlemek istediğinize emin misiniz?')) {
+      try {
+        const updatedAppointment = await appointmentApi.complete(id);
+        setAppointments(appointments.map(a => a.id === id ? updatedAppointment : a));
+      } catch (err) {
+        setError('Randevu tamamlanırken hata oluştu');
+        console.error(err);
+      }
+    }
+  };
+
+  const handleCancel = async (id) => {
+    if (window.confirm('Bu randevuyu iptal etmek istediğinize emin misiniz?')) {
+      try {
+        const updatedAppointment = await appointmentApi.cancel(id);
+        setAppointments(appointments.map(a => a.id === id ? updatedAppointment : a));
+      } catch (err) {
+        setError('Randevu iptal edilirken hata oluştu');
+        console.error(err);
+      }
+    }
   };
 
   if (!patientId) {
@@ -82,15 +119,35 @@ export default function AppointmentList({ patientId, patientName, refreshTrigger
                   className="status-badge" 
                   style={{ backgroundColor: getStatusColor(appointment.status) }}
                 >
-                  {appointment.status}
+                  {getStatusLabel(appointment.status)}
                 </span>
-                <button 
-                  className="btn-delete-small" 
-                  onClick={() => handleDelete(appointment.id)}
-                  title="Randevuyu sil"
-                >
-                  ✕
-                </button>
+                <div className="action-buttons">
+                  {appointment.status === 'SCHEDULED' && (
+                    <>
+                      <button 
+                        className="btn-complete" 
+                        onClick={() => handleComplete(appointment.id)}
+                        title="Randevuyu tamamlandı olarak işaretle"
+                      >
+                        ✓ Tamamlandı
+                      </button>
+                      <button 
+                        className="btn-cancel" 
+                        onClick={() => handleCancel(appointment.id)}
+                        title="Randevuyu iptal et"
+                      >
+                        ✕ İptal Et
+                      </button>
+                    </>
+                  )}
+                  <button 
+                    className="btn-delete-small" 
+                    onClick={() => handleDelete(appointment.id)}
+                    title="Randevuyu sil"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
               
               <div className="appointment-details">

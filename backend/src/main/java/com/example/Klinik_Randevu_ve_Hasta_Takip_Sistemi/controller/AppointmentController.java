@@ -64,4 +64,16 @@ public class AppointmentController {
         Appointment scheduledAppointment = appointmentService.scheduleAppointment(patientId, appointment);
         return new ResponseEntity<>(scheduledAppointment, HttpStatus.CREATED);
     }
+
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<Appointment> completeAppointment(@PathVariable Long id) {
+        Appointment completedAppointment = appointmentService.completeAppointment(id);
+        return new ResponseEntity<>(completedAppointment, HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<Appointment> cancelAppointment(@PathVariable Long id) {
+        Appointment cancelledAppointment = appointmentService.cancelAppointment(id);
+        return new ResponseEntity<>(cancelledAppointment, HttpStatus.OK);
+    }
 }

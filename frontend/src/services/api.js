@@ -116,4 +116,22 @@ export const appointmentApi = {
     if (!response.ok) throw new Error('Failed to schedule appointment');
     return response.json();
   },
+
+  complete: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/appointments/${id}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) throw new Error('Failed to complete appointment');
+    return response.json();
+  },
+
+  cancel: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/appointments/${id}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) throw new Error('Failed to cancel appointment');
+    return response.json();
+  },
 };
