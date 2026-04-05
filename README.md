@@ -56,12 +56,140 @@ Lambda function (`lambda_function.py`) yazılmıştır. AWS Console'da `iot-sens
 - Comprehensive error handling ve Türkçe loglama özelliği vardır
 - DynamoDB erişim izni (IAM Policy) verilmiştir
 
+### Adım 8: DynamoDB Tablosu ve IAM Yapılandırması
+DynamoDB tablosu (`iot-sensor-data`) oluşturulmuştur:
+- Partition Key: `sensor_id` (String)
+- Sort Key: `timestamp` (String)
+- Billing Mode: On-demand (Free Tier uyumlu)
+
+Lambda Execution Role (`iot-sensor-processor-role-y4oq4s7m`) yetkilendirilmiştir:
+- DynamoDB PutItem, GetItem, UpdateItem, Query izinleri verilmiştir
+- IoT Core Rule ile Lambda entegrasyonu tamamlanmıştır
+
+### Adım 9: Sistem Testi ve End-to-End Doğrulama
+Sensör simülatörü çalıştırılarak tüm sistem test edilmiştir:
+- IoT sensörü AWS IoT Core'a başarıyla bağlanmıştır
+- Sensör verileri MQTT aracılığıyla gönderilmektedir
+- IoT Core Rule, gelen mesajları Lambda'ya yönlendirmektedir
+- Lambda function DynamoDB'ye veri yazmaktadır
+- CloudWatch Logs'ta tüm işlemler izlenmektedir
+
+**Sistem Mimarisi Tamam ve Çalışıyor!**
+
 ---
 
-## Kurulum Talimatları
+## Kurulum ve Çalıştırma Talimatları
 
-(Sonraki adımlarla doldurulacak)
+### Python Ortamı Kurulması
+
+```bash
+# Virtual environment oluştur
+python -m venv venv
+
+# Activate et (Windows)
+.\venv\Scripts\Activate.ps1
+
+# Kütüphaneleri kur
+pip install -r requirements.txt
+```
+
+### Sensör Simülatörünü Çalıştır
+
+```bash
+cd src
+python sensor_sim.py
+```
+
+Sensör 10 adet MQTT mesajı gönderecek (her 2 saniyede bir).
+
+### Verileri DynamoDB'de Kontrol Et
+
+AWS Console → DynamoDB → Tables → iot-sensor-data → Explore table items
+
+### Lambda Logs'ları Kontrol Et
+
+AWS Console → CloudWatch → Log groups → /aws/lambda/iot-sensor-processor
+
+---
 
 ## Mimarinin Detaylı Açıklaması
 
-(Sonraki adımlarla doldurulacak)
+### Veri Akışı
+
+1. **IoT Sensör Simülatörü** (sensor_sim.py)
+   - Sıcaklık (°C) ve nem (%) verilerini simüle eder
+   - Her 2 saniyede 1 veri oluşturur
+   - MQTT protokolü ile AWS IoT Core'a gönderir
+   - Topic formatı: `sensors/{sensor_id}/data`
+
+2. **AWS IoT Core**
+   - MQTT mesajlarını alır
+   - Gelen mesajları kurallar (Rules) ile işler
+   - SQL Select ile `sensors/+/data` topic'ini filtreler
+
+3. **IoT Rule** (iot_to_lambda_rule)
+   - Gelen MQTT mesajlarını Lambda function'a yönlendirir
+   - Topic: `sensors/+/data` (wildcard ile tüm sensörler)
+
+4. **AWS Lambda** (iot-sensor-processor)
+   - IoT Core'dan gelen JSON verisini alır
+   - Veri doğrulaması yapar (temperature, humidity sayısal mı?)
+   - DynamoDB tablosuna PutItem işlemi ile yazıyor
+   - Hatalar durumunda CloudWatch Logs'ta kaydeder
+
+5. **AWS DynamoDB** (iot-sensor-data)
+   - Sensör verilerini kalıcı olarak saklar
+   - Partition Key: sensor_id
+   - Sort Key: timestamp
+   - Query yaparak geçmiş verileri analiz etme imkanı sağlar
+
+### Teknolojiler ve Servisleri
+
+- **Python 3.12+**: Sensör simülatörü ve Lambda function
+- **paho-mqtt**: MQTT protokolü üzerinden bağlantı
+- **boto3**: AWS servisleri ile etkileşim (Lambda için)
+- **AWS IoT Core**: IoT cihazları için merkezi hub
+- **AWS Lambda**: Serverless compute (event-driven)
+- **AWS DynamoDB**: Fully managed NoSQL veritabanı
+- **AWS IAM**: Erişim kontrolü ve yetkilendirme
+- **AWS CloudWatch**: Logging ve monitoring
+
+### Güvenlik
+
+- **TLS 1.2 Encryption**: MQTT bağlantısı şifrelenmiş
+- **X.509 Sertifikaları**: IoT Thing'in dijital sertifikası
+- **IAM Roles & Policies**: Least privilege principle ile sınırlandırılmıştır
+- **.gitignore**: Sertifika dosyaları GitHub'a çıkmazsa engel vardır
+
+---
+
+## Dosya Yapısı
+
+```
+Project2/
+├── .gitignore                 # Git ignore kuralları (sertifikalar hariç)
+├── README.md                  # Bu dosya
+├── requirements.txt           # Python kütüphaneleri
+├── src/
+│   ├── sensor_sim.py         # IoT sensör simülatörü (MQTT)
+│   └── lambda_function.py    # AWS Lambda function kodu
+├── config/                    # AWS konfigürasyonları
+├── certificates/              # AWS sertifikaları (gitignore'da)
+│   ├── iot-sensor-001.cert.pem
+│   ├── iot-sensor-001.private.key
+│   └── AmazonRootCA1.pem
+└── reports/                   # Proje raporları
+```
+
+---
+
+## Ücretlendirme Notları
+
+- **AWS IoT Core**: Free Tier (250.000 mesaj/ay)
+- **AWS Lambda**: Free Tier (1.000.000 çağrı/ay)
+- **AWS DynamoDB**: On-demand (Free Tier kapsamı)
+- **CloudWatch Logs**: Free Tier (5GB ingestion/month)
+
+**Toplam Ücret: Free Tier kapsamında (ücretli değil)**
+
+---
