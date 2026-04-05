@@ -467,7 +467,7 @@ Bu proje BLM3522 dersi kapsamında öğrenme amacıyla geliştirilmiştir.
 
 Proje hakkında detaylı bir anlatım videosu aşağıdaki linkte bulunmaktadır:
 
-[Klinik Randevu ve Hasta Takip Sistemi - Proje Videosu](https://link-koyulur)
+[Klinik Randevu ve Hasta Takip Sistemi - Proje Videosu](https://youtu.be/4YEXJam_Y9c)
 
 *Video: BLM3522 Bulut Bilişim Dersi - Proje 1 Sunumu*
 
