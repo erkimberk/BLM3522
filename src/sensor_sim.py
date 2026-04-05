@@ -270,8 +270,8 @@ def main():
         "sensor_id": "iot-sensor-001",
         "location": "Lab-Odası-1",
         "aws_endpoint": "avd01ikm8qx2k-ats.iot.eu-north-1.amazonaws.com",
-        "cert_path": os.path.join(base_path, "iot-sensor-001.cert.pem"),
-        "key_path": os.path.join(base_path, "iot-sensor-001.private.key"),
+        "cert_path": os.path.join(base_path, "bb286b6b4cc0dec45e44d6e339b784d1594333e26ecc234e2256ea8896d780ae-certificate.pem.crt"),
+        "key_path": os.path.join(base_path, "bb286b6b4cc0dec45e44d6e339b784d1594333e26ecc234e2256ea8896d780ae-private.pem.key"),
         "ca_path": os.path.join(base_path, "AmazonRootCA1.pem"),
     }
     
