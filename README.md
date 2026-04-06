@@ -72,9 +72,138 @@ Sensör simülatörü çalıştırılarak tüm sistem test edilmiştir:
 - Sensör verileri MQTT aracılığıyla gönderilmektedir
 - IoT Core Rule, gelen mesajları Lambda'ya yönlendirmektedir
 - Lambda function DynamoDB'ye veri yazmaktadır
-- CloudWatch Logs'ta tüm işlemler izlenmektedir
+
 
 **Sistem Mimarisi Tamam ve Çalışıyor!**
+
+### Adım 10: Veri Analizi ve Anomali Tespiti (ANALİTİKS)
+
+Lambda function'a **gerçek zamanlı veri analizi** özellikleri eklendi:
+
+#### **Anomali Tespiti Kuralları:**
+
+```
+Sıcaklık Analizi:
+- Normal Aralık: 15°C < T < 30°C
+- Uyarı (WARNING): T > 30°C VEYA T < 15°C
+- Kritik (CRITICAL): T > 35°C VEYA T < 0°C
+
+Nem Analizi:
+- Normal Aralık: 25% < H < 85%
+- Uyarı (WARNING): H > 85% VEYA H < 25%
+- Kritik (CRITICAL): H > 85% (ek kontrol)
+
+Alert Sistemi:
+- İki ya da daha fazla uyarı durumunda → WARNING
+- Kritik eşiklerin aşılması → CRITICAL
+```
+
+#### **DynamoDB Yeni Alanları:**
+
+Lambda'nın analiz sonuçları DynamoDB'de kaydediliyor:
+
+```json
+{
+  "sensor_id": "iot-sensor-001",
+  "timestamp": "2026-04-06T10:30:45Z",
+  "temperature": 23.45,
+  "humidity": 61.23,
+  "location": "Lab-Odası-1",
+  
+  // ✅ YENİ: ANALİTİKS ALANLAR
+  "alert": false,                              // Boolean: Uyarı var mı?
+  "alert_severity": "INFO",                    // String: INFO/WARNING/CRITICAL
+  "alert_messages": ["Veri normaldir"],        // List: Uyarı detayları
+  "processed_at": "2026-04-06T10:30:46Z",     // String: İşlem zamanı
+  "analysis_version": "1.0"                    // String: Analiz versiyonu
+}
+```
+
+#### **Lambda Kod Özellikleri:**
+
+**STAGE 1: Veri Validasyonu**
+- Gelen MQTT mesajını JSON olarak parse et
+- sensor_id, location, temperature, humidity, timestamp kontrolü yap
+- Veri tipi kontrolü (float, string, etc.)
+
+**STAGE 2: Anomali Tespiti (Analytics)**
+- Sıcaklık eşik kontrolü (15-30°C)
+- Nem eşik kontrolü (25-85%)
+- Alert flag ve severity belirleme
+- Uyarı mesajları oluşturma
+
+**STAGE 3: Veri İşleme**
+- Float → Decimal dönüştürme (DynamoDB gereksinimi!)
+- İşleme zamanı kaydı
+- Analytics metadata ekleme
+
+**STAGE 4: DynamoDB'ye Yazma**
+- PutItem operasyonu (analiz sonuçları dahil)
+- Tüm alanlar başarıyla saklanmıştır
+
+**STAGE 5: Loglama**
+- Input: [INPUT] Gelen IoT event
+- Processing: [PROCESSED] Sensor işleme sonucu
+- Output: statusCode 200/500
+
+#### **Test Sonuçları:**
+
+**Test 1: Normal Veri (23.5°C, 65% nem)**
+```
+✅ Lambda Test Passed
+- statusCode: 200 (Başarılı)
+- alert: false (Uyarı yok)
+- alert_severity: INFO (Normal)
+- Message: "Veri başarıyla işlendi"
+- CloudWatch Log: [PROCESSED] Sensor: iot-sensor-001 | Alert: False (INFO)
+```
+
+**Test 2: Yüksek Sıcaklık (35°C, 65% nem)**
+```
+✅ Lambda Anomaly Detection Passed
+- statusCode: 200 (Başarılı)
+- alert: true (Uyarı aktif!)
+- alert_severity: WARNING (Uyarı durumu)
+- alert_messages: ["Yüksek sıcaklık: 35.0°C"]
+- CloudWatch Log: [PROCESSED] Sensor: iot-sensor-001 | Alert: True (WARNING)
+```
+
+**Test 3: End-to-End Sistem Testi**
+```
+✅ Sensör Başarıyla Çalıştı
+- AWS IoT Core'a bağlantı: Başarılı
+- Yayınlanan mesaj sayısı: 11
+- Başarı oranı: 100% (11/11)
+- DynamoDB kaydedilen item: 11
+- Alert detection: Çalışıyor (test edildi)
+- CloudWatch logs: Tüm işlemler kaydedildi
+
+DynamoDB Doğrulama:
+├─ Tüm 11 item mevcutur
+├─ Tüm timestamp'ler sıralıdır
+├─ Alert alanları doğru doldurulmuştur
+├─ Analiz versiyonu 1.0 atanmıştır
+└─ Storage başarılı ve doğrulanmıştır
+```
+
+#### **Kritik Bulgu: Decimal Conversion**
+
+DynamoDB float tipi kabul etmiyor! Lambda'da çözüm:
+
+```python
+from decimal import Decimal
+
+# ❌ HATA: Float direkt kullanamazız
+'temperature': 23.45  # → ResourceNotFoundException
+
+# ✅ DOĞRU: Float → Decimal dönüştürme
+'temperature': Decimal(str(23.45))  # → Başarılı
+```
+
+Bu hata bulundu, analiz eklendi ve çözüldü!
+
+---
+
 
 ---
 
@@ -159,7 +288,6 @@ AWS Console → CloudWatch → Log groups → /aws/lambda/iot-sensor-processor
 - **TLS 1.2 Encryption**: MQTT bağlantısı şifrelenmiş
 - **X.509 Sertifikaları**: IoT Thing'in dijital sertifikası
 - **IAM Roles & Policies**: Least privilege principle ile sınırlandırılmıştır
-- **.gitignore**: Sertifika dosyaları GitHub'a çıkmazsa engel vardır
 
 ---
 
@@ -178,18 +306,4 @@ Project2/
 │   ├── iot-sensor-001.cert.pem
 │   ├── iot-sensor-001.private.key
 │   └── AmazonRootCA1.pem
-└── reports/                   # Proje raporları
 ```
-
----
-
-## Ücretlendirme Notları
-
-- **AWS IoT Core**: Free Tier (250.000 mesaj/ay)
-- **AWS Lambda**: Free Tier (1.000.000 çağrı/ay)
-- **AWS DynamoDB**: On-demand (Free Tier kapsamı)
-- **CloudWatch Logs**: Free Tier (5GB ingestion/month)
-
-**Toplam Ücret: Free Tier kapsamında (ücretli değil)**
-
----
