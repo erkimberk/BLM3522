@@ -55,7 +55,7 @@ cp .env.example .env
 ```
 
 ## Yol Haritası
-- [ ] Adım 1: Proje Kurulumu & AWS Ortam Hazırlığı ✅ (BURADA)
+- [x] Adım 1: Proje Kurulumu & AWS Ortam Hazırlığı ✅
 - [ ] Adım 2: AWS IoT Core Konfigürasyonu
 - [ ] Adım 3: Python IoT Cihaz Simülatörü
 - [ ] Adım 4: AWS Lambda & DynamoDB
