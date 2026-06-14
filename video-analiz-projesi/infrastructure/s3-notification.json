@@ -1,0 +1,16 @@
+{
+  "LambdaFunctionConfigurations": [
+    {
+      "LambdaFunctionArn": "arn:aws:lambda:eu-central-1:271003694403:function:VideoAnalizBaslat",
+      "Events": ["s3:ObjectCreated:*"],
+      "Filter": {
+        "Key": {
+          "FilterRules": [
+            { "Name": "prefix", "Value": "uploads/" },
+            { "Name": "suffix", "Value": ".mp4" }
+          ]
+        }
+      }
+    }
+  ]
+}
