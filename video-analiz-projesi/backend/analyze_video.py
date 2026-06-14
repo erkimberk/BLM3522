@@ -1,6 +1,7 @@
 import boto3
 import time
 import sys
+from save_results import save_analysis
 
 # Rekognition istemcisini başlat
 rekognition = boto3.client('rekognition')
@@ -52,3 +53,5 @@ if __name__ == "__main__":
     job = start_label_detection(video_key)
     result = get_results(job)
     print_labels(result)
+    # Sonuçları DynamoDB'ye kaydet
+    save_analysis(video_key, result)
