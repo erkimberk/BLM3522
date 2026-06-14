@@ -67,3 +67,35 @@ NotificationChannel ile sonuç SNS'e yönlendiriliyor (asenkron, beklemesiz).
     aws lambda create-function --function-name VideoAnalizBaslat \
       --runtime python3.12 --role arn:aws:iam::271003694403:role/VideoLambdaRole \
       --handler lambda_function.lambda_handler
+
+      ## Adım 6: İkinci Lambda (VideoSonucKaydet)
+Rekognition analizi bitince SNS'in tetiklediği fonksiyon. JobId ile sonuçları
+çekip DynamoDB'ye yazar. VideoLambdaRole'a dynamodb:PutItem izni eklendi.
+
+    aws lambda create-function --function-name VideoSonucKaydet \
+      --runtime python3.12 --role arn:aws:iam::271003694403:role/VideoLambdaRole \
+      --handler lambda_function.lambda_handler --timeout 60 \
+      --zip-file fileb://save_results.zip --region eu-central-1
+
+## Adım 7: SNS Aboneliği
+İkinci Lambda, SNS topic'e abone edildi ve SNS'e çağırma izni verildi.
+
+    aws lambda add-permission --function-name VideoSonucKaydet \
+      --statement-id sns-invoke-izni --action lambda:InvokeFunction \
+      --principal sns.amazonaws.com \
+      --source-arn arn:aws:sns:eu-central-1:271003694403:RekognitionTamamlandi
+
+    aws sns subscribe \
+      --topic-arn arn:aws:sns:eu-central-1:271003694403:RekognitionTamamlandi \
+      --protocol lambda \
+      --notification-endpoint arn:aws:lambda:eu-central-1:271003694403:function:VideoSonucKaydet
+
+## Uçtan Uca Test Sonucu
+Video yüklendi -> birinci Lambda analizi başlattı -> Rekognition işledi ->
+SNS tetiklendi -> ikinci Lambda 983 etiketi DynamoDB'ye yazdı. Tamamen
+otomatik akış doğrulandı.
+
+## Tam Mimari
+S3 (uploads/) -> Lambda (VideoAnalizBaslat) -> Rekognition -> SNS
+(RekognitionTamamlandi) -> Lambda (VideoSonucKaydet) -> DynamoDB
+(VideoAnalizSonuclari)
