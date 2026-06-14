@@ -27,6 +27,13 @@
       "Effect": "Allow",
       "Action": "iam:PassRole",
       "Resource": "arn:aws:iam::271003694403:role/RekognitionSNSRole"
+    },{
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:PutItem"
+      ],
+      "Resource": "arn:aws:dynamodb:eu-central-1:271003694403:table/VideoAnalizSonuclari"
     }
+
   ]
 }
