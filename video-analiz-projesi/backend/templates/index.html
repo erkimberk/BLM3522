@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Analiz Sistemi</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        h1 { color: #232f3e; }
+        .upload-box { background: #f4f4f4; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
+        th { background: #232f3e; color: white; }
+        a { color: #0073bb; text-decoration: none; }
+        button { background: #ff9900; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🎥 Bulut Tabanlı Video Analiz Sistemi</h1>
+
+    <div class="upload-box">
+        <h3>Video Yükle</h3>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="video" accept="video/*" required>
+            <button type="submit">Yükle ve Analiz Et</button>
+        </form>
+        <p><small>Video yüklendikten sonra analiz otomatik başlar. Sonuçların görünmesi 1-2 dakika sürebilir, sayfayı yenileyin.</small></p>
+    </div>
+
+    <h3>Analiz Edilmiş Videolar</h3>
+    <table>
+        <tr><th>Video</th><th>Etiket Sayısı</th><th>Detay</th></tr>
+        {% for v in videolar %}
+        <tr>
+            <td>{{ v.VideoId }}</td>
+            <td>{{ v.etiket_sayisi }}</td>
+            <td><a href="/detay/{{ v.VideoId }}">Görüntüle</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

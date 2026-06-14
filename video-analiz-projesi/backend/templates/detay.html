@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Analiz Detayı</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        h1 { color: #232f3e; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+        th { background: #232f3e; color: white; }
+        a { color: #0073bb; }
+    </style>
+</head>
+<body>
+    <a href="/">← Geri</a>
+    <h1>Analiz Detayı</h1>
+    {% if video %}
+    <p><strong>Video:</strong> {{ video.VideoId }}</p>
+    <p><strong>Toplam Etiket:</strong> {{ video.etiket_sayisi }}</p>
+    <table>
+        <tr><th>Zaman (sn)</th><th>Nesne</th><th>Güven (%)</th></tr>
+        {% for e in video.etiketler %}
+        <tr>
+            <td>{{ "%.1f"|format(e.zaman_ms / 1000) }}</td>
+            <td>{{ e.isim }}</td>
+            <td>{{ e.guven }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Video bulunamadı.</p>
+    {% endif %}
+</body>
+</html>
