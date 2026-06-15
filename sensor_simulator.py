@@ -73,23 +73,18 @@ class SensorSimulator:
         cert_path = Path(cert_dir)
 
         try:
+            # Tüm cihazlar aynı sertifikaları kullanıyor (AWS IoT tarafında policy ile kontrol)
+            cert_file = str(cert_path / "device.crt")
+            key_file = str(cert_path / "private.key")
+
             # Traffic Light
-            self.mqtt_traffic.set_device_certificates(
-                str(cert_path / "traffic-light-cert.pem"),
-                str(cert_path / "traffic-light-private.key"),
-            )
+            self.mqtt_traffic.set_device_certificates(cert_file, key_file)
 
             # Air Quality
-            self.mqtt_air.set_device_certificates(
-                str(cert_path / "air-quality-cert.pem"),
-                str(cert_path / "air-quality-private.key"),
-            )
+            self.mqtt_air.set_device_certificates(cert_file, key_file)
 
             # Trash Bin
-            self.mqtt_trash.set_device_certificates(
-                str(cert_path / "trash-bin-cert.pem"),
-                str(cert_path / "trash-bin-private.key"),
-            )
+            self.mqtt_trash.set_device_certificates(cert_file, key_file)
 
             logger.info("✅ Sertifikalar ayarlandı")
         except FileNotFoundError as e:

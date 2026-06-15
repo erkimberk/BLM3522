@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏙️ Smart City IoT Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>🏙️ Smart City IoT Dashboard</h1>
+            <p class="subtitle">Gerçek zamanlı sensör verisi ve analitik</p>
+        </div>
+        <div class="header-status">
+            <span id="api-status" class="status-badge">Bağlanılıyor...</span>
+            <span id="last-update" class="last-update">Son güncelleme: --:--:--</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Controls -->
+        <div class="controls">
+            <button id="refresh-btn" class="btn btn-primary">🔄 Yenile</button>
+            <div class="control-group">
+                <label for="update-interval">Güncelleme Aralığı:</label>
+                <select id="update-interval">
+                    <option value="5">5 Saniye</option>
+                    <option value="10" selected>10 Saniye</option>
+                    <option value="30">30 Saniye</option>
+                    <option value="60">1 Dakika</option>
+                </select>
+            </div>
+            <button id="auto-refresh-btn" class="btn btn-secondary">▶ Otomatik Güncelle Başlat</button>
+        </div>
+
+        <!-- Alerts Section -->
+        <section class="section alerts-section">
+            <h2>⚠️ Aktif Uyarılar</h2>
+            <div id="alerts-container" class="alerts-container">
+                <div class="loading">Uyarılar yükleniyor...</div>
+            </div>
+        </section>
+
+        <!-- Sensor Cards Grid -->
+        <section class="section sensors-section">
+            <h2>📊 Sensör Ölçümleri</h2>
+            <div class="sensors-grid">
+                <!-- Traffic Light Card -->
+                <div class="sensor-card">
+                    <div class="card-header traffic-light">
+                        <h3>🚦 Trafik Işığı</h3>
+                        <span class="device-id">traffic-light-001</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="metric">
+                            <span class="label">Yoğunluk:</span>
+                            <span id="traffic-value" class="value">--</span>
+                            <span class="unit">%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Konum:</span>
+                            <span id="traffic-location" class="location">Main Street</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Durum:</span>
+                            <span id="traffic-status" class="status-label">--</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="traffic-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Air Quality Card -->
+                <div class="sensor-card">
+                    <div class="card-header air-quality">
+                        <h3>💨 Hava Kalitesi</h3>
+                        <span class="device-id">air-quality-001</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="metric">
+                            <span class="label">PM2.5:</span>
+                            <span id="air-value" class="value">--</span>
+                            <span class="unit">µg/m³</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">AQI:</span>
+                            <span id="air-aqi" class="value">--</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Kategori:</span>
+                            <span id="air-category" class="aqi-category">--</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="air-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trash Bin Card -->
+                <div class="sensor-card">
+                    <div class="card-header trash-bin">
+                        <h3>🗑️ Çöp Kutusu</h3>
+                        <span class="device-id">trash-bin-001</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="metric">
+                            <span class="label">Doluluk:</span>
+                            <span id="trash-value" class="value">--</span>
+                            <span class="unit">%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Ağırlık:</span>
+                            <span id="trash-weight" class="value">--</span>
+                            <span class="unit">kg</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Aciliyet:</span>
+                            <span id="trash-urgency" class="urgency-badge">--</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trash-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistics Section -->
+        <section class="section stats-section">
+            <h2>📈 İstatistikler (Son 24 Saat)</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Trafik Yoğunluğu</h4>
+                    <div class="stat-values">
+                        <div class="stat-item">
+                            <span class="label">Min:</span>
+                            <span id="traffic-min">--</span>%
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Max:</span>
+                            <span id="traffic-max">--</span>%
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Ort:</span>
+                            <span id="traffic-avg">--</span>%
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Sayı:</span>
+                            <span id="traffic-count">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h4>Hava Kalitesi (PM2.5)</h4>
+                    <div class="stat-values">
+                        <div class="stat-item">
+                            <span class="label">Min:</span>
+                            <span id="air-min">--</span> µg/m³
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Max:</span>
+                            <span id="air-max">--</span> µg/m³
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Ort:</span>
+                            <span id="air-avg">--</span> µg/m³
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Sayı:</span>
+                            <span id="air-count">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h4>Çöp Kutusu Doluluk</h4>
+                    <div class="stat-values">
+                        <div class="stat-item">
+                            <span class="label">Min:</span>
+                            <span id="trash-min">--</span>%
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Max:</span>
+                            <span id="trash-max">--</span>%
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Ort:</span>
+                            <span id="trash-avg">--</span>%
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Sayı:</span>
+                            <span id="trash-count">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Connection Info -->
+        <section class="section info-section">
+            <h3>ℹ️ Sistem Bilgisi</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="label">API:</span>
+                    <span id="api-version">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Veritabanı:</span>
+                    <span id="db-status">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Son Çalışma:</span>
+                    <span id="last-refresh">--</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>🏙️ Smart City IoT Application v1.0 | AWS IoT Core + Lambda + DynamoDB</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

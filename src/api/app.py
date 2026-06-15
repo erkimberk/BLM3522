@@ -10,7 +10,7 @@ Endpoints:
 - GET /api/health - Health check
 """
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 import sys
 from pathlib import Path
@@ -29,7 +29,12 @@ except ImportError:
     SensorDataQuery = None
 
 # Flask app oluştur
-app = Flask(__name__, static_folder="../../frontend", static_url_path="/static")
+app = Flask(
+    __name__,
+    template_folder="templates",
+    static_folder="static",
+    static_url_path="/static"
+)
 CORS(app)  # Cross-Origin Resource Sharing aktif
 
 # Logging
@@ -100,6 +105,22 @@ def get_sensor_latest(sensor_type):
                     "timestamp": r.get("timestamp"),
                     "location": r.get("location"),
                     "metadata": r.get("metadata", {}),
+                }
+            )
+
+        # Veri yoksa mesaj göster
+        if not formatted:
+            return jsonify(
+                {
+                    "sensor_type": sensor_type,
+                    "count": 0,
+                    "data": [],
+                    "message": "❌ Veri bulunamadı! Sensör verisi göndermek için:",
+                    "instructions": {
+                        "step1": "python sensor_simulator.py --duration 300",
+                        "step2": "VEYA AWS Lambda + IoT Rule kurulumunu tamamla",
+                        "docs": "Detaylar için README.md'ye bak"
+                    }
                 }
             )
 
@@ -269,13 +290,7 @@ def get_statistics(sensor_type, device_id):
 @app.route("/", methods=["GET"])
 def serve_dashboard():
     """Dashboard HTML'i serve et"""
-    return send_from_directory("../../frontend", "index.html")
-
-
-@app.route("/static/<path:filename>", methods=["GET"])
-def serve_static(filename):
-    """Static dosyaları (CSS, JS) serve et"""
-    return send_from_directory("../../frontend", filename)
+    return render_template("index.html")
 
 
 # ============================================================

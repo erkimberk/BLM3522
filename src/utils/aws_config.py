@@ -23,7 +23,9 @@ class AWSIoTConfig:
 
         # Sertifika yolları
         self.cert_path = Path(os.getenv("IOT_CERT_PATH", "config/certificates/"))
-        self.ca_cert = self.cert_path / os.getenv("CA_CERT", "AmazonRootCA1.pem")
+        self.ca_cert = Path(os.getenv("IOT_CA_FILE", "config/certificates/AmazonRootCA1.pem"))
+        self.device_cert = Path(os.getenv("IOT_CERT_FILE", "config/certificates/device.crt"))
+        self.device_key = Path(os.getenv("IOT_KEY_FILE", "config/certificates/private.key"))
 
         # Thing IDs
         self.things = {

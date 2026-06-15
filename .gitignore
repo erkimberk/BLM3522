@@ -12,9 +12,15 @@ ENV/
 
 # AWS Credentials & Secrets
 .env
+.env.*
+!.env.example
 config/aws_credentials.json
-config/*.pem
-config/*.key
+
+# Sertifikalar ve anahtarlar (TÜM klasörlerde)
+*.pem
+*.key
+*.crt
+config/certificates/
 
 # Python
 __pycache__/
@@ -31,5 +37,5 @@ Thumbs.db
 logs/
 *.log
 
-# Node modules (for frontend)
+# Node modules
 node_modules/

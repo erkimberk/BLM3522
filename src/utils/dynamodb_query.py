@@ -3,17 +3,141 @@ DynamoDB Query Helper Functions
 DynamoDB'den veri sorgulama yardımcı fonksiyonları
 
 Bu modül frontend ve analiz scripti tarafından kullanılır.
+Mock mode devre dışı - sadece AWS'den gerçek veri çeker!
 """
 
 import boto3
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
+import os
+import random
 
-dynamodb = boto3.resource("dynamodb")
+# Lokal mock mode - DEVRE DIŞI (sadece gerçek AWS verisi)
+MOCK_MODE = False  # Hiçbir zaman mock data kullanma!
+
+try:
+    if MOCK_MODE:
+        dynamodb = None
+    else:
+        dynamodb = boto3.resource("dynamodb")
+except Exception as e:
+    print(f"⚠️  DynamoDB bağlantısı başarısız, mock mode kullanılıyor: {e}")
+    MOCK_MODE = True
+    dynamodb = None
+
+
+def _generate_mock_traffic_data(count: int = 20) -> List[Dict]:
+    """Sahte traffic light verisi oluştur"""
+    data = []
+    now = datetime.now()
+    for i in range(count):
+        ts = now - timedelta(minutes=i*5)
+        value = random.uniform(10, 95)
+        data.append({
+            "pk": "traffic_light#traffic-light-001",
+            "sk": ts.isoformat() + "Z",
+            "timestamp": ts.isoformat() + "Z",
+            "sensor_type": "traffic_light",
+            "device_id": "traffic-light-001",
+            "metric": "congestion",
+            "value": round(value, 2),
+            "metadata": {
+                "location": "Main Street",
+                "status": "green" if value < 33 else "yellow" if value < 66 else "red",
+                "vehicle_count": random.randint(200, 1500),
+                "avg_speed": round(random.uniform(20, 80), 1)
+            }
+        })
+    return sorted(data, key=lambda x: x["timestamp"], reverse=True)
+
+
+def _generate_mock_air_data(count: int = 20) -> List[Dict]:
+    """Sahte air quality verisi oluştur"""
+    data = []
+    now = datetime.now()
+    for i in range(count):
+        ts = now - timedelta(minutes=i*5)
+        pm25 = random.uniform(20, 150)
+        aqi = int(pm25 * 1.2)
+        data.append({
+            "pk": "air_quality#air-quality-001",
+            "sk": ts.isoformat() + "Z",
+            "timestamp": ts.isoformat() + "Z",
+            "sensor_type": "air_quality",
+            "device_id": "air-quality-001",
+            "metric": "pm25",
+            "value": round(pm25, 2),
+            "metadata": {
+                "location": "Downtown",
+                "pm10": round(pm25 * 2.5, 2),
+                "co2": random.randint(400, 800),
+                "temperature": round(random.uniform(15, 30), 1),
+                "humidity": random.randint(30, 80),
+                "aqi": aqi,
+                "category": "Good" if aqi < 50 else "Fair" if aqi < 100 else "Moderate" if aqi < 150 else "Poor"
+            }
+        })
+    return sorted(data, key=lambda x: x["timestamp"], reverse=True)
+
+
+def _generate_mock_trash_data(count: int = 20) -> List[Dict]:
+    """Sahte trash bin verisi oluştur"""
+    data = []
+    now = datetime.now()
+    weight = 0
+    for i in range(count):
+        ts = now - timedelta(minutes=i*5)
+        weight += random.uniform(0.5, 3)
+        fill_pct = min(weight / 100 * 100, 95)
+        
+        data.append({
+            "pk": "trash_bin#trash-bin-001",
+            "sk": ts.isoformat() + "Z",
+            "timestamp": ts.isoformat() + "Z",
+            "sensor_type": "trash_bin",
+            "device_id": "trash-bin-001",
+            "metric": "fill_level",
+            "value": round(fill_pct, 2),
+            "metadata": {
+                "location": "Park Street",
+                "weight_kg": round(weight, 2),
+                "collection_needed": fill_pct > 85,
+                "urgency": "critical" if fill_pct > 90 else "high" if fill_pct > 75 else "medium" if fill_pct > 50 else "low"
+            }
+        })
+    return sorted(data, key=lambda x: x["timestamp"], reverse=True)
+
+
+def _generate_mock_alerts(count: int = 5) -> List[Dict]:
+    """Sahte uyarılar oluştur"""
+    alerts = []
+    now = datetime.now()
+    
+    alert_types = [
+        {"type": "high_congestion", "severity": "critical", "message": "Trafik yoğunluğu kritik seviyeye ulaştı", "device": "traffic-light-001"},
+        {"type": "poor_air_quality", "severity": "high", "message": "Hava kalitesi kötü", "device": "air-quality-001"},
+        {"type": "trash_full", "severity": "high", "message": "Çöp kutusu doluluk %90'ı aştı", "device": "trash-bin-001"},
+    ]
+    
+    for i, alert_type in enumerate(alert_types[:count]):
+        ts = now - timedelta(hours=i*2)
+        alerts.append({
+            "alert_id": f"alert-{i+1}",
+            "timestamp": ts.isoformat() + "Z",
+            "device_id": alert_type["device"],
+            "alert_type": alert_type["type"],
+            "severity": alert_type["severity"],
+            "message": alert_type["message"],
+            "value": random.uniform(75, 150),
+            "threshold": 85,
+            "resolved": False
+        })
+    
+    return alerts
 
 
 class SensorDataQuery:
-    """DynamoDB'den sensör verilerini sorgula"""
+    """DynamoDB'den sensör verilerini sorgula (ya da mock data döndür)"""
 
     def __init__(self, region: str = "eu-central-1"):
         """
@@ -22,9 +146,17 @@ class SensorDataQuery:
         Args:
             region: AWS bölgesi
         """
-        self.dynamodb = boto3.resource("dynamodb", region_name=region)
-        self.readings_table = self.dynamodb.Table("smart-city-sensor-readings")
-        self.alerts_table = self.dynamodb.Table("smart-city-sensor-alerts")
+        self.region = region
+        self.mock_mode = MOCK_MODE
+        
+        try:
+            self.dynamodb = boto3.resource("dynamodb", region_name=region)
+            self.readings_table = self.dynamodb.Table("smart-city-sensor-readings")
+            self.alerts_table = self.dynamodb.Table("smart-city-sensor-alerts")
+            print("✅ DynamoDB'ye bağlanıldı")
+        except Exception as e:
+            print(f"⚠️  DynamoDB bağlantı hatası: {e}")
+            raise Exception("AWS DynamoDB bağlanamıyor. Lütfen sensör verisi gönderin!")
 
     def get_latest_readings(self, sensor_type: str, limit: int = 10) -> List[Dict]:
         """
@@ -35,7 +167,7 @@ class SensorDataQuery:
             limit: Kaç adet
             
         Returns:
-            list: Sensör ölçümleri
+            list: Sensör ölçümleri (boş ise veri yok!)
         """
         try:
             response = self.readings_table.query(
@@ -62,7 +194,7 @@ class SensorDataQuery:
             hours: Kaç saat geriye
             
         Returns:
-            list: Sensör ölçümleri
+            list: Sensör ölçümleri (boş ise veri yok!)
         """
         pk = f"{sensor_type}#{device_id}"
         cutoff_time = (datetime.now() - timedelta(hours=hours)).isoformat() + "Z"
@@ -89,7 +221,7 @@ class SensorDataQuery:
             hours: Kaç saat geriye
             
         Returns:
-            list: Sensör ölçümleri
+            list: Sensör ölçümleri (boş ise veri yok!)
         """
         cutoff_time = (datetime.now() - timedelta(hours=hours)).isoformat() + "Z"
 
@@ -110,7 +242,7 @@ class SensorDataQuery:
         Çözülmemiş uyarıları al
         
         Returns:
-            list: Aktif uyarılar
+            list: Aktif uyarılar (boş ise veri yok!)
         """
         try:
             response = self.alerts_table.scan(
@@ -131,7 +263,7 @@ class SensorDataQuery:
             hours: Kaç saat geriye
             
         Returns:
-            list: Uyarılar
+            list: Uyarılar (boş ise veri yok!)
         """
         cutoff_time = (datetime.now() - timedelta(hours=hours)).isoformat() + "Z"
 
@@ -171,10 +303,10 @@ class SensorDataQuery:
 
         return {
             "count": len(values),
-            "min": min(values),
-            "max": max(values),
-            "avg": sum(values) / len(values),
-            "latest": values[0] if values else None,
+            "min": round(min(values), 2),
+            "max": round(max(values), 2),
+            "avg": round(sum(values) / len(values), 2),
+            "latest": round(values[0], 2) if values else None,
             "timestamp": readings[0].get("timestamp") if readings else None,
         }
 

@@ -49,7 +49,36 @@ class SmartCityMQTTClient:
 
     def _on_disconnect(self, client, userdata, disconnect_flags, rc, properties=None):
         """MQTT bağlantı kopması callback'i"""
-        logger.warning(f"⚠️  {self.thing_name} bağlantısı kesildi: rc={rc}")
+        # rc ReasonCode nesnesi olabilir, convert et
+        try:
+            rc_value = int(rc) if rc else 0
+        except:
+            rc_value = 0
+            
+        error_codes = {
+            0: "Normal disconnect",
+            1: "Unexpected disconnect",
+            2: "MQTT Protocol error",
+            3: "Broker unavailable",
+            4: "Broker is closing",
+            5: "Keep alive timeout",
+            6: "Session taken over",
+            7: "Invalid server response",
+            8: "TLS handshake error",
+            9: "Authentication error",
+            10: "Not authorized",
+            11: "Server not available",
+            12: "Server moved",
+            13: "Connection rate exceeded",
+            14: "Maximum connect time exceeded",
+            15: "Unspecified error",
+        }
+        
+        error_msg = error_codes.get(rc_value, "Unknown error")
+        if rc_value in [8, 9]:
+            logger.error(f"❌ {self.thing_name} TLS/Auth hatası ({error_msg}): rc={rc_value} - Sertifikaları kontrol et!")
+        elif rc_value != 0:
+            logger.warning(f"⚠️  {self.thing_name} bağlantısı kesildi ({error_msg}): rc={rc_value}")
         self.is_connected = False
 
     def _on_publish(self, client, userdata, mid, rc, properties=None):
@@ -73,20 +102,7 @@ class SmartCityMQTTClient:
     def connect(self):
         """AWS IoT Core'a bağlan"""
         try:
-            # TLS/SSL sertifikalarını ayarla
-            self.client.tls_set(
-                ca_certs=self.device_config["ca_cert"],
-                certfile=None,  # Client cert PATH'i set_device_certs() ile yapılır
-                keyfile=None,
-                cert_reqs=True,  # Sertifikayı doğrula
-                tls_version=None,  # Default TLS versiyonu
-                ciphers=None,
-            )
-
-            # Hostname doğrulamasını disable et (AWS IoT için)
-            self.client.tls_insecure = False
-
-            # AWS IoT Core'a bağlan
+            # AWS IoT Core'a bağlan (TLS zaten set_device_certificates() ile yapıldı)
             logger.info(
                 f"🔄 {self.thing_name} bağlanıyor: {self.device_config['endpoint']}:{self.device_config['port']}"
             )
@@ -109,16 +125,37 @@ class SmartCityMQTTClient:
             cert_file: Sertifika dosyasının yolu
             key_file: Private key dosyasının yolu
         """
+        from pathlib import Path
+        
         try:
+            # Dosyaların varlığını kontrol et
+            cert_path = Path(cert_file)
+            key_path = Path(key_file)
+            ca_path = Path(self.device_config["ca_cert"])
+            
+            if not cert_path.exists():
+                raise FileNotFoundError(f"Certificate bulunamadı: {cert_path.absolute()}")
+            if not key_path.exists():
+                raise FileNotFoundError(f"Private key bulunamadı: {key_path.absolute()}")
+            if not ca_path.exists():
+                raise FileNotFoundError(f"CA certificate bulunamadı: {ca_path.absolute()}")
+            
             self.client.tls_set(
-                ca_certs=self.device_config["ca_cert"],
-                certfile=cert_file,
-                keyfile=key_file,
+                ca_certs=str(ca_path),
+                certfile=str(cert_path),
+                keyfile=str(key_path),
                 cert_reqs=True,
                 tls_version=None,
                 ciphers=None,
             )
+            
+            # Hostname doğrulamasını disable et (AWS IoT için)
+            self.client.tls_insecure = False
+            
             logger.info(f"✅ {self.thing_name} sertifikalar ayarlandı")
+        except FileNotFoundError as e:
+            logger.error(f"❌ Sertifika dosyası hatası: {e}")
+            raise
         except Exception as e:
             logger.error(f"❌ Sertifika ayarlama hatası: {e}")
             raise
